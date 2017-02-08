@@ -107,17 +107,20 @@ final class EnvironmentImpl extends Environment implements Wifi.ScanResultsRecei
         Fingerprint fingerprint = new Fingerprint();
         for (Ap ap :
                 base) {
-            int signal = 0;
+//            int signal = 0;
+            ArrayList<Integer> signals = new ArrayList<>(sampleCnt);
             for (int i = 0; i < sampleCnt; i++) {
                 List scan = scans[i];
                 for (int j = 0; j < scan.size(); j++) {
                     ScanResult scanResult = (ScanResult) scan.get(j);
-                    if (scanResult.BSSID.equals(ap.mac) && scanResult.SSID.equals(ap.ssid)) {
-                        signal += WifiManager.calculateSignalLevel(scanResult.level, SIGNAL_LEVEL_NUM);
+                    if (scanResult.BSSID.equals(ap.mac)) {
+//                        signal += WifiManager.calculateSignalLevel(scanResult.level, SIGNAL_LEVEL_NUM);
+                        signals.add(i, WifiManager.calculateSignalLevel(scanResult.level, SIGNAL_LEVEL_NUM));
                     }
                 }
             }
-            fingerprint.put(ap, signal);
+//            fingerprint.put(ap, signal);
+            fingerprint.put(ap, signals);
         }
         Log.i(TAG, "generateFingerprint: fingerprint made");
         return fingerprint;
