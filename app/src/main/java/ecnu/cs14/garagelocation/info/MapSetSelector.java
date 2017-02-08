@@ -39,6 +39,9 @@ class MapSetSelector {
         for (Ap ap :
                 aps) {
             String filename = index.get(ap);
+            if (filename == null) {
+                continue;
+            }
             if (!count.containsKey(filename)) {
                 count.put(filename, 1);
                 if (max == 0) {
