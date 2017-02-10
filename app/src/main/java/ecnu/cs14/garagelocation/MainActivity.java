@@ -202,7 +202,8 @@ public final class MainActivity extends AppCompatActivity {
     private void tryRequestPermissions() {
         String[] permissions = {
                 Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_FINE_LOCATION
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
         };
         boolean requestNeeded = false;
 

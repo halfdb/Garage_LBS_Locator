@@ -1,7 +1,6 @@
 package ecnu.cs14.garagelocation.info;
 
-import android.content.Context;
-import android.content.res.AssetManager;
+import android.os.Environment;
 import ecnu.cs14.garagelocation.data.Ap;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,12 +14,12 @@ import java.util.*;
  */
 
 final class FileSystem {
-    private Context context;
-    private AssetManager manager;
+    private File path;
     private Map<Ap, String> index;
-    FileSystem(Context context) {
-        this.context = context;
-        manager = context.getAssets();
+    FileSystem() {
+        path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+        path = new File(path, "SnifferFingerprints");
+        path.mkdirs();
     }
 
     private static String streamToString(InputStream stream) throws IOException {
@@ -42,7 +41,7 @@ final class FileSystem {
         if (index != null) {
             return index;
         }
-        InputStream stream = manager.open(INDEX_FILENAME);
+        InputStream stream = new FileInputStream(new File(path, INDEX_FILENAME));
         String fileString = streamToString(stream);
         JSONObject json = new JSONObject(fileString);
         Iterator<String> keys = json.keys();
@@ -66,12 +65,12 @@ final class FileSystem {
             stringIndex.put(key.mac, filename);
         }
         JSONObject json = new JSONObject(stringIndex);
-        FileOutputStream stream = context.openFileOutput(INDEX_FILENAME, Context.MODE_PRIVATE);
+        OutputStream stream = new FileOutputStream(new File(path, INDEX_FILENAME));
         stream.write(json.toString().getBytes());
     }
 
     JSONObject getMapSetJson(String filename) throws IOException, JSONException {
-        InputStream stream = manager.open(filename);
+        InputStream stream = new FileInputStream(new File(path, filename));
         String fileString = streamToString(stream);
         return new JSONObject(fileString);
     }
@@ -85,7 +84,7 @@ final class FileSystem {
 
     void saveMapSet(MapSet mapSet) throws IOException, JSONException {
         Random random = new Random();
-        String[] files = context.fileList();
+        String[] files = path.list();
         int filenameInt = random.nextInt();
         String filename;
         boolean continueFlag;
@@ -105,7 +104,7 @@ final class FileSystem {
     }
 
     void saveMapSet(String filename, MapSet mapSet) throws IOException, JSONException {
-        FileOutputStream stream = context.openFileOutput(filename, Context.MODE_PRIVATE);
+        OutputStream stream = new FileOutputStream(new File(path, filename));
         stream.write(mapSet.toJson().toString().getBytes());
         updateIndex(mapSet.getAps(), filename);
     }

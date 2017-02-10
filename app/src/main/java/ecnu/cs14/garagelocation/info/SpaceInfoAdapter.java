@@ -22,7 +22,7 @@ final class SpaceInfoAdapter extends SpaceInfo {
 
     SpaceInfoAdapter(Context context) {
         super(context);
-        fileSystem = new FileSystem(context);
+        fileSystem = new FileSystem();
         selector = new MapSetSelector(fileSystem);
     }
 
