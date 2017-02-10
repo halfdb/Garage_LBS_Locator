@@ -23,6 +23,7 @@ public final class Sniffer {
     private int mapIndex;
     private Map map;
     private SpaceInfo spaceInfo;
+    private boolean isChanged;
 
     /**
      * A time-consuming constructor.
@@ -64,7 +65,7 @@ public final class Sniffer {
      */
     public void changeMap(int index, boolean storePrevious) {
         if (storePrevious) {
-            spaceInfo.updateMap(mapIndex, map);
+            save();
         }
         mapIndex = index;
         map = copyMapBase(spaceInfo.selectMap(index));
@@ -93,14 +94,26 @@ public final class Sniffer {
      */
     public void storeSample(Pair<Integer, Integer> position, Fingerprint fingerprint) {
         map.samples.add(new Sample(position, fingerprint));
+        isChanged = true;
+    }
+
+    public boolean needsSaving() {
+        return isChanged;
+    }
+
+    public void save() {
+        if (!needsSaving()) {
+            return;
+        }
+        spaceInfo.updateMap(mapIndex, map);
+        spaceInfo.saveAllMaps();
+        isChanged = false;
     }
 
     /**
      * Finish the work. The last map will be saved. All updated map will be stored to physical media.
      */
     public void finish() {
-        spaceInfo.updateMap(mapIndex, map);
-        spaceInfo.saveAllMaps();
         environment.destroy();
     }
 }

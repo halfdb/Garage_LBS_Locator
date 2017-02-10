@@ -8,6 +8,7 @@ import android.graphics.Rect;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import ecnu.cs14.garagelocation.data.Map;
 
@@ -21,8 +22,9 @@ import java.util.HashSet;
 public class MapView extends View {
     private final static String TAG = MapView.class.getName();
 
-    private Paint mPaint;
+    private Paint mShapePaint;
     private Paint mBackgroundPaint;
+    private Paint mPositionDotPaint;
     private View mEmptyView;
 
     public MapView(Context context) {
@@ -50,11 +52,12 @@ public class MapView extends View {
     }
 
     private void initPaint() {
-        mPaint = new Paint();
-        mPaint.setColor(Color.DKGRAY);
-
+        mShapePaint = new Paint();
+        mShapePaint.setColor(Color.DKGRAY);
         mBackgroundPaint = new Paint();
         mBackgroundPaint.setColor(Color.LTGRAY);
+        mPositionDotPaint = new Paint();
+        mPositionDotPaint.setColor(Color.BLUE);
     }
 
     private Rect mBackgroundRect = new Rect();
@@ -84,6 +87,13 @@ public class MapView extends View {
         invalidate();
     }
 
+    private HashSet<Pair<Integer, Integer>> mPositions = new HashSet<>();
+    private static final float DOT_RADIUS = 5.0f;
+    public void drawSampleDot(Pair<Integer, Integer> position) {
+        mPositions.add(position);
+        invalidate();
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int wMode = MeasureSpec.getMode(widthMeasureSpec);
@@ -109,11 +119,15 @@ public class MapView extends View {
         canvas.drawRect(mBackgroundRect, mBackgroundPaint);
         for (Map.Shape.Rect rect :
                 mRects) {
-            canvas.drawRect(rect.left, rect.top, rect.right, rect.bottom, mPaint);
+            canvas.drawRect(rect.left, rect.top, rect.right, rect.bottom, mShapePaint);
         }
         for (Map.Shape.Circle circle :
                 mCircles) {
-            canvas.drawCircle(circle.center_left, circle.center_top, circle.radius, mPaint);
+            canvas.drawCircle(circle.center_left, circle.center_top, circle.radius, mShapePaint);
+        }
+        for (Pair<Integer, Integer> p :
+                mPositions) {
+            canvas.drawCircle((float) p.first, (float) p.second, DOT_RADIUS, mPositionDotPaint);
         }
     }
 }

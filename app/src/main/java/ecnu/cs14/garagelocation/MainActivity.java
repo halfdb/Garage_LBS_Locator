@@ -12,24 +12,28 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.util.Pair;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import ecnu.cs14.garagelocation.data.Fingerprint;
 
 import java.lang.ref.WeakReference;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public final class MainActivity extends AppCompatActivity {
     private final static String TAG = MainActivity.class.getName();
 
     private MapView mMapView;
     private Button mSampleButton;
+    private Button mSaveButton;
     private ProgressDialog waitingDialog;
     private Sniffer mSniffer;
     private final MainActivityHandler mHandler = new MainActivityHandler(this);
+
 
     private static final class MainActivityHandler extends Handler {
         private final WeakReference<MainActivity> mActivityRef;
@@ -74,6 +78,8 @@ public final class MainActivity extends AppCompatActivity {
         mMapView.setVisibility(View.VISIBLE);
         mSampleButton.setVisibility(View.VISIBLE);
         mSampleButton.setClickable(true);
+        mSaveButton.setVisibility(View.VISIBLE);
+        mSaveButton.setClickable(true);
         mMapView.setMap(mSniffer.getMaps().get(mSniffer.getMapIndex()));
     }
 
@@ -148,6 +154,12 @@ public final class MainActivity extends AppCompatActivity {
         }
         mSampleButton.setClickable(false);
         mSampleButton.setVisibility(View.GONE);
+        mSaveButton = (Button) findViewById(R.id.save_button);
+        if (mSaveButton == null) {
+            finish();
+        }
+        mSaveButton.setClickable(false);
+        mSaveButton.setVisibility(View.GONE);
     }
 
     public void takeSample(View v) {
@@ -187,16 +199,59 @@ public final class MainActivity extends AppCompatActivity {
                 })
                 .setCancelable(false)
                 .show();
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask()   {
+            public void run() {
+                InputMethodManager inputManager = (InputMethodManager) MainActivity.this.getSystemService(INPUT_METHOD_SERVICE);
+                inputManager.showSoftInput(editText, 0);
+            }
+        }, 500);
     }
 
     private void storeSample() {
         if (!mFingerprintUpdated || !mPositionUpdated) {
             return;
         }
+        mMapView.drawSampleDot(mPosition);
         mSniffer.storeSample(mPosition, mFingerprint);
         mFingerprintUpdated = false;
         mPositionUpdated = false;
         waitingDialog.dismiss();
+    }
+
+    public void saveMap(View view) {
+        mSniffer.save();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!mSniffer.needsSaving()) {
+            finish();
+            return;
+        }
+        new AlertDialog.Builder(this)
+                .setMessage("是否保存采集的数据？")
+                .setCancelable(true)
+                .setPositiveButton("是", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        saveMap(null);
+                        MainActivity.this.finish();
+                    }
+                })
+                .setNegativeButton("否", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        MainActivity.this.finish();
+                    }
+                })
+                .setNeutralButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                })
+                .show();
     }
 
     private void tryRequestPermissions() {

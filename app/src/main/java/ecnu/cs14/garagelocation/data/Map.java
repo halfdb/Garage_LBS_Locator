@@ -59,7 +59,7 @@ public final class Map {
             public JSONObject toJson() throws JSONException {
                 return new JSONObject().put("type", "circle")
                         .put("center-left", center_left)
-                        .put("center_top", center_top)
+                        .put("center-top", center_top)
                         .put("radius", radius);
             }
         }
