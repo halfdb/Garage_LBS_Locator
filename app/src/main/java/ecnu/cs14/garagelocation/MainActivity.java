@@ -12,6 +12,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -41,6 +42,7 @@ public final class MainActivity extends AppCompatActivity {
         final static int MSG_SNIFFER = 0;
         final static int MSG_FINGERPRINT = 1;
         final static int MSG_POSITION_STRING = 2;
+        final static int MSG_LOCATOR = 3;
 
         MainActivityHandler(MainActivity activity) {
             mActivityRef = new WeakReference<>(activity);
@@ -65,6 +67,10 @@ public final class MainActivity extends AppCompatActivity {
                     mActivityRef.get().receivePositionString((String) msg.obj);
                     break;
                 }
+                case MSG_LOCATOR:
+                {
+                    mActivityRef.get().receiveLocator((Locator) msg.obj);
+                }
             }
         }
     }
@@ -81,6 +87,26 @@ public final class MainActivity extends AppCompatActivity {
         mSaveButton.setVisibility(View.VISIBLE);
         mSaveButton.setClickable(true);
         mMapView.setMap(mSniffer.getMaps().get(mSniffer.getMapIndex()));
+    }
+
+    private void receiveLocator(final Locator locator) {
+        if (locator == null) {
+            Log.e(TAG, "receiveLocator: No locator available");
+            Toast.makeText(this, "无法定位", Toast.LENGTH_LONG).show();
+            return;
+        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(TAG, "receiveLocator: start");
+                locator.locate();
+                Log.d(TAG, "receiveLocator: post-locating");
+                locator.finish();
+                Log.d(TAG, "receiveLocator: finish");
+            }
+        }).start();
+        mMapView.setVisibility(View.VISIBLE);
+        mMapView.setMap(locator.getMaps().get(locator.getMapIndex()));
     }
 
     private boolean mFingerprintUpdated = false;
@@ -123,11 +149,11 @@ public final class MainActivity extends AppCompatActivity {
             public void run() {
                 Message msg = new Message();
                 try {
-                    msg.obj = new Sniffer(MainActivity.this);
-                } catch (NullPointerException e) {
+                    msg.obj = new Locator(MainActivity.this, DummyAlgorithm.class);
+                } catch (Throwable e) {
                     msg.obj = null;
                 }
-                msg.what = MainActivityHandler.MSG_SNIFFER;
+                msg.what = MainActivityHandler.MSG_LOCATOR;
                 mHandler.sendMessage(msg);
             }
         }).start();
